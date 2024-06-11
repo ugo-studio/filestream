@@ -17,7 +17,7 @@ FileServer _fileServer = FileServer();
 
 Map<String, String> _defaultHeaders = {"Access-Control-Allow-Origin": "*"};
 
-void main(List<String> arguments) async {
+void main() async {
   var port = Random().nextInt(10000) + 5000;
   var netIp = await getNetworkIpAddress();
   var info = {

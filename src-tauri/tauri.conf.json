@@ -21,15 +21,33 @@
         "save": true
       },
       "shell": {
-        "all": false,
+        "all": true,
         "open": true,
         "execute": true,
         "sidecar": true,
         "scope": [
           {
-            "name": "binaries/server",
-            "sidecar": true
+            "name": "bin/server",
+            "sidecar": true,
+            "args": false
+          },
+          {
+            "name": "./bin/server",
+            "sidecar": true,
+            "args": false
+          },
+          {
+            "name":  "C:\\projects\\bun projects\\filestream\\src-tauri\\bin\\server",
+            "sidecar": true,
+            "args": false
           }
+          
+        ]
+      },
+      "fs": {
+        "all": true,
+        "scope": [
+          "$RESOURCE/*"
         ]
       }
     },
@@ -56,7 +74,9 @@
         "icons/icon.ico"
       ],
       "externalBin": [
-        "binaries/server"
+        "./bin/server",
+        "C:\\projects\\bun projects\\filestream\\src-tauri\\bin\\server",
+        "bin/server"
       ]
     }
   }

@@ -9,25 +9,31 @@
   import { onDestroy, onMount } from "svelte";
   import QrcodeView from "../comp/qrcode-view.svelte";
   import Username from "../comp/username.svelte";
-  import { Child, Command } from "@tauri-apps/api/shell";
+  import { Child, Command, type ChildProcess } from "@tauri-apps/api/shell";
 
   let server = new FileServer(() => null);
   let command: Command | undefined;
-  let process: any | undefined;
+  let process: Child | ChildProcess | undefined;
   let timer: any;
   let showQr = false;
 
   const startProcess = () =>
     new Promise<any>(async (resolve, reject) => {
-      command = Command.sidecar("binaries/server");
+      command = Command.sidecar("./bin/server");
       command.stdout.on("data", (d) => {
         console.log(d);
       });
       command.stderr.on("data", (d) => {
         console.log(d);
       });
-      process = await command.execute();
-      console.log(process)
+      command.on("error", (e) => {
+        console.log(e);
+      });
+      command.on("close", (e) => {
+        console.log(e);
+      });
+      process = await command.spawn();
+      // process.write("console.log('helo');");
     });
 
   onMount(async () => {
@@ -43,7 +49,7 @@
   });
 
   onDestroy(() => {
-    process?.kill();
+    (process as any)?.kill();
     command = undefined;
     clearInterval(timer);
     server.disconnect();
