@@ -280,6 +280,7 @@
           color: #fff;
           font-size: 0.78em;
           max-width: 80%;
+          user-select: all;
           .icon {
             height: 30px;
             width: 100%;

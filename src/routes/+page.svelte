@@ -11,49 +11,53 @@
   import Username from "../comp/username.svelte";
   import { Child, Command, type ChildProcess } from "@tauri-apps/api/shell";
 
-  let server = new FileServer(() => null);
+  let server = new FileServer();
   let command: Command | undefined;
-  let process: Child | ChildProcess | undefined;
+  let process: Child | undefined;
   let timer: any;
   let showQr = false;
 
-  const startProcess = () =>
-    new Promise<any>(async (resolve, reject) => {
-      command = Command.sidecar("./bin/server");
-      command.stdout.on("data", (d) => {
-        console.log(d);
-      });
-      command.stderr.on("data", (d) => {
-        console.log(d);
-      });
-      command.on("error", (e) => {
-        console.log(e);
-      });
-      command.on("close", (e) => {
-        console.log(e);
-      });
-      process = await command.spawn();
-      // process.write("console.log('helo');");
-    });
-
-  onMount(async () => {
-    if (!server.serverAddr) {
-      startProcess();
-    }
-    server.connect();
+  onMount(() => {
     timer = setInterval(() => {
-      if (server.stat == FileServerStat.closed) {
-        server.connect();
-      }
+      if (server.stat == FileServerStat.closed) startServer();
     }, 1000);
   });
 
   onDestroy(() => {
-    (process as any)?.kill();
+    process?.kill();
     command = undefined;
     clearInterval(timer);
     server.disconnect();
   });
+
+  const startProcess = () =>
+    new Promise<any>(async (resolve) => {
+      command = Command.sidecar("bin/server-bun");
+      command.on("error", (_) => resolve(process?.kill()));
+      command.on("close", (_) => resolve(process?.kill()));
+      command.stdout.on("data", (d) => {
+        try {
+          let json = JSON.parse(String(d));
+          resolve(json);
+        } catch (_) {}
+      });
+      process = await command.spawn();
+    });
+
+  const startServer = async () => {
+    if (!server.serverAddr) {
+      await process?.kill();
+      let info = await startProcess();
+      if (info && info.network && info.port) {
+        let serverAddr = `http://${info.network}:${info.port}`;
+        let shareAddr = `${serverAddr}/?p=${encodeURIComponent(window.location.origin)}&s=${encodeURIComponent(serverAddr)}`;
+        server.serverAddr = serverAddr;
+        server.shareAddr = shareAddr;
+        console.log(info, serverAddr, shareAddr);
+      }
+    }
+    server.connect();
+  };
 </script>
 
 <svelte:head>

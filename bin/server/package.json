@@ -1,0 +1,19 @@
+{
+  "name": "server-bun",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch ./index.ts",
+    "build": "esbuild ./index.ts --platform=node --format=cjs --bundle --outfile=dist/index.js && pkg dist/index.js -t latest -o ../../src-tauri/bin/server-x86_64-pc-windows-msvc",
+    "build-bun": "bun build --compile --minify --sourcemap ./index.ts --outfile ../../src-tauri/bin/server-x86_64-pc-windows-msvc"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.11.3",
+    "@types/ws": "^8.5.10",
+    "hono": "^4.4.5",
+    "ws": "^8.17.1"
+  }
+}

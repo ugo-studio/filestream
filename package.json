@@ -4,7 +4,8 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "bin": "dart compile exe ./bin/server/bin/server.dart -o ./src-tauri/bin/server-x86_64-pc-windows-msvc.exe",
+    "bindart": "dart compile exe ./bin/server/bin/server.dart -o ./src-tauri/bin/server-x86_64-pc-windows-msvc.exe",
+    "binbun": "cd ./bin/server/ && bun run build",
     "dev": "vite dev --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",

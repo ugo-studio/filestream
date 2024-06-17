@@ -17,7 +17,7 @@ export class FileServer {
   onMessageUpdate: (msg: FileServer["_messages"]) => any;
   onStatusChange: (stat: FileServerStat) => any;
 
-  constructor(onError: (e: any) => any) {
+  constructor() {
     let url = new URL(window.location.href);
     let params = url.searchParams;
 
@@ -26,9 +26,7 @@ export class FileServer {
       this.shareAddr = `http://${new URL(`${this.serverAddr}`).hostname}:${
         url.port
       }/?s=${encodeURIComponent(this.serverAddr ?? "")}`;
-    } catch (e) {
-      onError(e);
-    }
+    } catch (_) {}
 
     this.id = v4();
     this.onStatusChange = () => null;
@@ -103,6 +101,7 @@ export class FileServer {
         // console.log("opened");
       };
       this.socket.onmessage = (e) => {
+        console.log(e.data);
         const data: FileServerSocketMsg = JSON.parse(e.data);
         if (data.ping) {
           this.send({ ping: true });
@@ -125,13 +124,14 @@ export class FileServer {
 
       const file = this._files.find((e) => e.name === data.file);
       if (file) {
-        const body = new FormData();
-        body.set("file", file);
+        // const body = new FormData();
+        // body.set("file", file);
 
         await fetch(url, {
           method: "POST",
-          body: body,
-        }).catch((e) => console.log(e.message));
+          body: file.stream(),
+          duplex: "half",
+        } as any).catch((e) => console.log(e.message));
       }
     }
   }
