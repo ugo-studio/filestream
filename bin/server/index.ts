@@ -1,12 +1,13 @@
 import { Hono } from "hono";
+import { lookup } from "mime-types";
 import { getNetworkIpAddress, getRandomNumber } from "./lib/utils";
 import { FileServer, type FileServerSocketMsg } from "./lib/file-server";
-import { serve } from "@hono/node-server";
-import { WebSocketServer } from "ws";
+import { createBunWebSocket } from "hono/bun";
 
 // initialize app, fileserver and websocket
 const app = new Hono();
 const fileServer = new FileServer();
+const wss = createBunWebSocket();
 
 // handler cors
 app.use("/*", async ({ req, res }, next) => {
@@ -20,6 +21,7 @@ app.use("/*", async ({ req, res }, next) => {
 app.get("/", async (c) => {
   try {
     var proxy = c.req.query("p");
+
     if (proxy) {
       const resp = await fetch(proxy, c.req.raw);
       console.log(resp.body);
@@ -41,9 +43,17 @@ app.get("/file", async (c) => {
     if (rid == null || id == null || name == null || size == null) {
       return c.text("queries not found", 403);
     }
+    // request file stream
     const req = await fileServer.requestFile(id, name, rid);
-    fileServer.removeRequest(rid);
-    return new Response(req);
+    // get stats
+    const type = lookup(name) || "application/octet-stream";
+    return new Response(req, {
+      headers: {
+        "content-disposition": `attachment; filename="${name}";`,
+        "content-length": size,
+        "content-type": type,
+      },
+    });
   } catch (e: any) {
     return c.text(e.toString(), 404);
   }
@@ -64,6 +74,33 @@ app.post("/upload", async (c) => {
   }
 });
 
+app.all("/connect", async (c, n) => {
+  const id = c.req.query("id");
+  const name = c.req.query("name");
+
+  if (!id || !name) return c.text(`"id" or "name" not found!`, 403);
+
+  return wss.upgradeWebSocket((c) => {
+    const close = (evt: any) => fileServer.remove(id, name, evt);
+    return {
+      onClose: close,
+      onError: close,
+      onMessage(evt, ws) {
+        var msg: FileServerSocketMsg = JSON.parse(evt.data.toString());
+        if (msg.ping == true) {
+          fileServer.add({ id: id, name: name, socket: ws });
+        } else {
+          fileServer.broadcast({ ...msg, id, name });
+        }
+      },
+      onOpen(_, ws) {
+        ws.send(JSON.stringify({ ping: true } as FileServerSocketMsg));
+        console.log(`connection request: ${id} --> ${name}`);
+      },
+    };
+  })(c, n);
+});
+
 // gather server info
 const info = {
   local: "127.0.0.1",
@@ -73,37 +110,10 @@ const info = {
 };
 
 // start server
-const server = serve(
-  {
-    port: info.port,
-    hostname: "0.0.0.0",
-    fetch: app.fetch,
-  },
-  () => console.log(JSON.stringify(info))
-);
-
-const wss = new WebSocketServer({ server: server as any });
-
-wss.on("connection", (ws, req) => {
-  const url = new URL(`http://localhost${req.url}`);
-  const id = url.searchParams.get("id");
-  const name = url.searchParams.get("name");
-  if (!id || !name) return ws.close(403, `"id" or "name" not found!`);
-
-  const close = (evt: any) => fileServer.remove(id, name, evt);
-
-  ws.onclose = close;
-  ws.onerror = close;
-  ws.onopen = () => {
-    ws.send(JSON.stringify({ ping: true } as FileServerSocketMsg));
-    console.log(`connection request: ${id} --> ${name}`);
-  };
-  ws.onmessage = (evt) => {
-    var msg: FileServerSocketMsg = JSON.parse(evt.data.toString());
-    if (msg.ping == true) {
-      fileServer.add({ id: id, name: name, socket: ws });
-    } else {
-      fileServer.broadcast({ ...msg, id, name });
-    }
-  };
+Bun.serve({
+  port: info.port,
+  hostname: "0.0.0.0",
+  websocket: wss.websocket,
+  fetch: app.fetch,
 });
+console.log(JSON.stringify(info));

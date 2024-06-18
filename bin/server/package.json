@@ -3,17 +3,21 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch ./index.ts",
-    "build": "esbuild ./index.ts --platform=node --format=cjs --bundle --outfile=dist/index.js && pkg dist/index.js -t latest -o ../../src-tauri/bin/server-x86_64-pc-windows-msvc",
-    "build-bun": "bun build --compile --minify --sourcemap ./index.ts --outfile ../../src-tauri/bin/server-x86_64-pc-windows-msvc"
+    "dev": "bun --watch ./index.ts",
+    "build": "npm run es-build && npm run bun-build",
+    "es-build": "esbuild ./index.ts --platform=node --format=cjs --bundle --outfile=dist/index.js",
+    "pkg-build": "pkg dist/index.js -t latest -o ../../src-tauri/bin/server-x86_64-pc-windows-msvc",
+    "bun-build": "bun build --compile --minify --sourcemap ./index.ts --outfile ../../src-tauri/bin/server-x86_64-pc-windows-msvc"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@hono/node-server": "^1.11.3",
-    "@types/ws": "^8.5.10",
+    "@types/mime-types": "^2.1.4",
     "hono": "^4.4.5",
-    "ws": "^8.17.1"
+    "mime-types": "^2.1.35"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
   }
 }

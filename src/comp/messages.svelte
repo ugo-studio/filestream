@@ -288,6 +288,7 @@
             flex-direction: row;
             align-items: center;
             justify-content: center;
+            user-select: none;
             .size {
               font-size: 0.85em;
               font-weight: 400;

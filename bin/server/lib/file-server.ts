@@ -1,5 +1,4 @@
-import type { HonoRequest } from "hono";
-import type { WebSocket } from "ws";
+import type { WSContext } from "hono/ws";
 
 export interface FileServerSocketMsg {
   ping?: true;
@@ -16,7 +15,7 @@ export interface FileServerSocketMsg {
 export interface FileServerConnection {
   id: string;
   name: string;
-  socket: WebSocket;
+  socket: WSContext;
 }
 
 export interface FileServerRequest {
@@ -80,23 +79,34 @@ export class FileServer {
       const send = async (req?: Request) => {
         if (req) {
           sending = true;
-          resolve(req.body);
-          console.log(req.body?.locked);
-          // wait for receiver to consume request
-          await new Promise<void>((r) => {
-            const timeout = setTimeout(() => {
-              clearInterval(timer);
-              r();
-            }, 60000 * 10); /* 10 minutes */
-            const timer = setInterval(() => {
-              console.log(req.body?.locked);
-              if (!req.body?.locked) {
-                clearTimeout(timeout);
+          // send stream to the receiver
+          await new Promise<void>(async (r) => {
+            try {
+              const { readable, writable } = new TransformStream();
+              const file: File | null = (await req.formData()).get(
+                "file"
+              ) as any;
+              file?.stream()?.pipeTo(writable);
+              resolve(readable);
+              // wait for receiver to consume the stream
+              const timeout = setTimeout(() => {
                 clearInterval(timer);
                 r();
-              }
-            }, 2000);
+              }, 60000 * 10); /* 10 minutes */
+              const timer = setInterval(() => {
+                if (!writable.locked) {
+                  clearTimeout(timeout);
+                  clearInterval(timer);
+                  r();
+                }
+              }, 2000);
+            } catch (err) {
+              r();
+              console.error(`error sending stream: ${err}`);
+            }
           });
+          // remove request on finish
+          this.removeRequest(rid);
           sending = false;
         } else {
           if (!sending) {
