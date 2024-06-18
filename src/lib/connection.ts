@@ -1,3 +1,9 @@
+import {
+  adjectives,
+  animals,
+  colors,
+  uniqueNamesGenerator,
+} from "unique-names-generator";
 import { v4 } from "uuid";
 
 const STORAGE_KEY_PREFIX = "_filestream_storage_";
@@ -55,7 +61,15 @@ export class FileServer {
   }
 
   getName() {
-    return localStorage.getItem(`${STORAGE_KEY_PREFIX}username`);
+    let name = localStorage.getItem(`${STORAGE_KEY_PREFIX}username`);
+    if (!name) {
+      name = uniqueNamesGenerator({
+        dictionaries: [adjectives, colors, animals],
+        separator: "-",
+      });
+      this.setName(name);
+    }
+    return name;
   }
   setName(name: string) {
     localStorage.setItem(`${STORAGE_KEY_PREFIX}username`, name);
@@ -83,7 +97,7 @@ export class FileServer {
       this.name = this.getName() ?? navigator.platform;
 
       const url = new URL(this.serverAddr);
-      url.pathname = "/connect";
+      url.pathname = "/filestream/connect";
       url.protocol = "ws";
       url.searchParams.set("id", this.id);
       url.searchParams.set("name", this.name);
@@ -119,7 +133,7 @@ export class FileServer {
   private async uploadFile(data: FileServerSocketMsg) {
     if (data.id == this.id) {
       const url = new URL(this.serverAddr!);
-      url.pathname = "/upload";
+      url.pathname = "/filestream/upload";
       url.searchParams.set("rid", data.fileRID!);
 
       const file = this._files.find((e) => e.name === data.file);
@@ -188,7 +202,7 @@ export class FileServer {
       throw new Error("server not found");
     }
     const url = new URL(this.serverAddr);
-    url.pathname = "/file";
+    url.pathname = "/filestream/file";
     url.searchParams.set("id", senderId);
     url.searchParams.set("rid", v4());
     url.searchParams.set("name", filename);

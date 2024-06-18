@@ -7,7 +7,7 @@
   },
   "package": {
     "productName": "filestream",
-    "version": "0.0.0"
+    "version": "1.0.0"
   },
   "tauri": {
     "allowlist": {
@@ -29,7 +29,7 @@
           {
             "name": "bin/server",
             "sidecar": true,
-            "args": false
+            "args": true
           }
         ]
       },

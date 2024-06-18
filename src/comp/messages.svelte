@@ -48,6 +48,7 @@
   let text: string = "";
   let fileInput: HTMLInputElement;
   let textInput: HTMLInputElement;
+  let sendBtn: HTMLButtonElement;
   let msgPanel: HTMLDivElement;
 
   const viewingNewMsg = () => {
@@ -66,8 +67,9 @@
 
   const send = async () => {
     if (text.length == 0) return;
-    textInput.value = "";
     await server.send({ text });
+    textInput.value = "";
+    text = "";
   };
 
   const handleClick = async ({ data, stat }: FileServerMsg) => {
@@ -177,14 +179,19 @@
     <input
       bind:this={textInput}
       on:input={(e) => (text = e.currentTarget.value)}
-      on:keyup={(e) => e.key?.toLowerCase() == "enter" && send()}
+      on:keyup={(e) => e.key?.toLowerCase() == "enter" && sendBtn.click()}
       type="text"
       class="text"
       placeholder="write something..."
       value={text}
       max="1"
     />
-    <button type="button" class="send {text.length > 0}" on:click={send}>
+    <button
+      bind:this={sendBtn}
+      type="button"
+      class="send {text.length > 0}"
+      on:click={send}
+    >
       <Icon src={TrOutlineSend} size={25} color="white" />
     </button>
   </div>

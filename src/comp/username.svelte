@@ -5,8 +5,8 @@
   export let server: FileServer;
 
   let display: boolean = true;
-  let name: string = "";
   let prevname: string = "";
+  let name: string = "";
 
   onMount(() => {
     name = prevname = server.getName() ?? "";
@@ -17,11 +17,15 @@
     if (busy) return;
     busy = true;
     name = name.trim();
-    server.setName(name);
-    if (prevname != name) await server.connect();
-    else if (server.stat !== FileServerStat.connected) await server.connect();
+    if (name.length < 3) {
+      alert("name can't be less than 3 characters");
+    } else {
+      server.setName(name);
+      if (prevname != name) await server.connect();
+      else if (server.stat !== FileServerStat.connected) await server.connect();
+      display = false;
+    }
     busy = false;
-    display = false;
   };
 </script>
 

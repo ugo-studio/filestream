@@ -9,7 +9,7 @@
   import { onDestroy, onMount } from "svelte";
   import QrcodeView from "../comp/qrcode-view.svelte";
   import Username from "../comp/username.svelte";
-  import { Child, Command, type ChildProcess } from "@tauri-apps/api/shell";
+  import { Child, Command } from "@tauri-apps/api/shell";
 
   let server = new FileServer();
   let command: Command | undefined;
@@ -32,7 +32,10 @@
 
   const startProcess = () =>
     new Promise<any>(async (resolve) => {
-      command = Command.sidecar("bin/server-bun");
+      command = Command.sidecar(
+        "bin/server",
+        encodeURIComponent(window.location.href)
+      );
       command.on("error", (_) => resolve(process?.kill()));
       command.on("close", (_) => resolve(process?.kill()));
       command.stdout.on("data", (d) => {
@@ -50,7 +53,7 @@
       let info = await startProcess();
       if (info && info.network && info.port) {
         let serverAddr = `http://${info.network}:${info.port}`;
-        let shareAddr = `${serverAddr}/?p=${encodeURIComponent(window.location.origin)}&s=${encodeURIComponent(serverAddr)}`;
+        let shareAddr = `${serverAddr}/?s=${encodeURIComponent(serverAddr)}`;
         server.serverAddr = serverAddr;
         server.shareAddr = shareAddr;
         console.log(info, serverAddr, shareAddr);
