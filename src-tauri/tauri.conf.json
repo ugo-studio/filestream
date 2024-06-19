@@ -50,7 +50,6 @@
       "identifier": "com.ugo.studio.file.stream",
       "shortDescription": "filestream | file sharing app",
       "longDescription": "filestream | file sharing app",
-      "category": "tools",
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",
