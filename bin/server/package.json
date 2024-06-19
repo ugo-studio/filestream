@@ -1,13 +1,14 @@
 {
-  "name": "server-bun",
+  "name": "fileserver",
+  "description": "file server from filestream app",
   "module": "index.ts",
   "type": "module",
   "scripts": {
     "dev": "bun --watch run ./index.ts \"http://localhost:1420/\"",
-    "build": "npm run es-build && npm run bun-build",
+    "build": "bun run es-build && bun run bun-build",
     "es-build": "esbuild ./index.ts --platform=node --format=cjs --bundle --outfile=dist/index.js",
-    "pkg-build": "pkg dist/index.js -t latest -o ../../src-tauri/bin/server-x86_64-pc-windows-msvc",
-    "bun-build": "bun build --compile --minify --sourcemap ./dist/index.js --outfile ../../src-tauri/bin/server-x86_64-pc-windows-msvc"
+    "pkg-build": "pkg dist/index.js -t latest -o ../../src-tauri/bin/server",
+    "bun-build": "bun build --compile --minify --sourcemap ./dist/index.js --outfile ../../src-tauri/bin/server"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
