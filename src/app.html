@@ -5,18 +5,31 @@
   <meta charset="utf-8" />
   <link rel="icon" href="%sveltekit.assets%/favicon.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- <title>Tauri + SvelteKit + Typescript App</title> -->
+  <!-- <title>FileStream</title> -->
   <style>
     * {
       padding: 0;
       margin: 0;
       box-sizing: border-box;
+      user-select: none;
+      touch-action: none;
     }
   </style>
   %sveltekit.head%
 </head>
 
 <body data-sveltekit-preload-data="hover">
+  <script>
+    document.addEventListener("contextmenu", (e) => {
+      e.preventDefault()
+    })
+    document.addEventListener("wheel", (e) => {
+      if (e.ctrlKey) e.preventDefault()
+    }, { passive: false })
+    document.addEventListener("touchmove", (e) => {
+      if (e.scale !== 1) e.preventDefault()
+    }, { passive: false })
+  </script>
   <div style="display: contents">%sveltekit.body%</div>
 </body>
 

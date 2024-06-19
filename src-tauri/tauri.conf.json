@@ -7,7 +7,7 @@
   },
   "package": {
     "productName": "filestream",
-    "version": "1.0.0"
+    "version": "1.0.1"
   },
   "tauri": {
     "allowlist": {
@@ -21,9 +21,8 @@
         "save": true
       },
       "shell": {
-        "all": true,
+        "all": false,
         "open": true,
-        "execute": true,
         "sidecar": true,
         "scope": [
           {
@@ -31,12 +30,6 @@
             "sidecar": true,
             "args": true
           }
-        ]
-      },
-      "fs": {
-        "all": true,
-        "scope": [
-          "$RESOURCE/*"
         ]
       }
     },
@@ -55,6 +48,9 @@
       "active": true,
       "targets": "all",
       "identifier": "com.ugo.studio.file.stream",
+      "shortDescription": "filestream | file sharing app",
+      "longDescription": "filestream | file sharing app",
+      "category": "tools",
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",
