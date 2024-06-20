@@ -18,9 +18,10 @@
   let showQr = false;
 
   onMount(() => {
+    startServer();
     timer = setInterval(() => {
-      if (server.stat == FileServerStat.closed) startServer();
-    }, 1000);
+      startServer();
+    }, 6000);
   });
 
   onDestroy(() => {
@@ -48,18 +49,20 @@
     });
 
   const startServer = async () => {
-    if (!server.serverAddr) {
-      await process?.kill();
-      let info = await startProcess();
-      if (info && info.network && info.port) {
-        let serverAddr = `http://${info.network}:${info.port}`;
-        let shareAddr = `${serverAddr}/?s=${encodeURIComponent(serverAddr)}`;
-        server.serverAddr = serverAddr;
-        server.shareAddr = shareAddr;
-        console.log(info, serverAddr, shareAddr);
+    if (server.stat === FileServerStat.closed) {
+      if (!server.serverAddr) {
+        await process?.kill();
+        let info = await startProcess();
+        if (info && info.network && info.port) {
+          let serverAddr = `http://${info.network}:${info.port}`;
+          let shareAddr = `${serverAddr}/?s=${encodeURIComponent(serverAddr)}`;
+          server.serverAddr = serverAddr;
+          server.shareAddr = shareAddr;
+          console.log(info, serverAddr, shareAddr);
+        }
       }
+      server.connect();
     }
-    server.connect();
   };
 </script>
 
