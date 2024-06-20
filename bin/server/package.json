@@ -4,7 +4,7 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "dev": "bun --watch run ./index.ts \"http://localhost:1420/\"",
+    "dev": "bun --watch run ./index.ts \"C:/projects/bun projects/filestream/build\"",
     "build": "bun install && bun run es-build && bun run bun-build",
     "es-build": "esbuild ./index.ts --platform=node --format=cjs --bundle --outfile=dist/index.js",
     "pkg-build": "pkg dist/index.js -t latest -o ../../src-tauri/bin/server",

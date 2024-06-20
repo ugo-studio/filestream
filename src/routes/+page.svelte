@@ -10,24 +10,33 @@
   import QrcodeView from "../comp/qrcode-view.svelte";
   import Username from "../comp/username.svelte";
   import { Child, Command } from "@tauri-apps/api/shell";
+  import { resourceDir } from "@tauri-apps/api/path";
 
   let server = new FileServer();
   let command: Command | undefined;
   let process: Child | undefined;
-  let timer: any;
   let showQr = false;
 
-  onMount(() => {
-    startServer();
-    timer = setInterval(() => {
-      startServer();
-    }, 6000);
+  onMount(async () => {
+    if (server.stat === FileServerStat.closed) {
+      if (!server.serverAddr) {
+        await process?.kill();
+        const info = await startProcess();
+        if (info && info.network && info.port) {
+          let serverAddr = `http://${info.network}:${info.port}`;
+          let shareAddr = `${serverAddr}/?s=${encodeURIComponent(serverAddr)}`;
+          server.serverAddr = serverAddr;
+          server.shareAddr = shareAddr;
+          console.log(info, serverAddr, shareAddr);
+        }
+      }
+      server.connect();
+    }
   });
 
   onDestroy(() => {
     process?.kill();
     command = undefined;
-    clearInterval(timer);
     server.disconnect();
   });
 
@@ -35,7 +44,7 @@
     new Promise<any>(async (resolve) => {
       command = Command.sidecar(
         "bin/server",
-        encodeURIComponent(window.location.href)
+        encodeURIComponent(await resourceDir())
       );
       command.on("error", (_) => resolve(process?.kill()));
       command.on("close", (_) => resolve(process?.kill()));
@@ -47,23 +56,6 @@
       });
       process = await command.spawn();
     });
-
-  const startServer = async () => {
-    if (server.stat === FileServerStat.closed) {
-      if (!server.serverAddr) {
-        await process?.kill();
-        let info = await startProcess();
-        if (info && info.network && info.port) {
-          let serverAddr = `http://${info.network}:${info.port}`;
-          let shareAddr = `${serverAddr}/?s=${encodeURIComponent(serverAddr)}`;
-          server.serverAddr = serverAddr;
-          server.shareAddr = shareAddr;
-          console.log(info, serverAddr, shareAddr);
-        }
-      }
-      server.connect();
-    }
-  };
 </script>
 
 <svelte:head>

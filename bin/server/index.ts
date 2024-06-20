@@ -3,6 +3,9 @@ import { lookup } from "mime-types";
 import { getNetworkIpAddress, getRandomNumber } from "./lib/utils";
 import { FileServer, type FileServerSocketMsg } from "./lib/file-server";
 import { createBunWebSocket } from "hono/bun";
+import { join } from "path";
+import { existsSync } from "fs";
+import { stat } from "fs/promises";
 
 // initialize app, fileserver and websocket
 const app = new Hono();
@@ -87,14 +90,17 @@ app.all("/filestream/connect", async (c, n) => {
 
 app.get("/*", async (c) => {
   try {
-    const proxy = decodeURIComponent(Bun.argv[2]);
-    if (proxy) {
-      const url = new URL(
-        c.req.url.replace(new URL(c.req.url).origin, new URL(proxy).origin)
-      );
-      const resp = await fetch(url, c.req.raw);
-      return new Response(resp.body, resp);
-    } else return c.json({ ok: true });
+    const { staticFiles } = info;
+    if (staticFiles) {
+      const file = c.req.path.substring(1);
+      const path = join(staticFiles, file.length == 0 ? "index.html" : file);
+      const info = await stat(path);
+      if (existsSync(path) && info.isFile()) {
+        return new Response(Bun.file(path));
+      }
+    }
+
+    return c.json({ ok: true });
   } catch (e: any) {
     return c.text(e.message, 500);
   }
@@ -105,6 +111,7 @@ const info = {
   local: "127.0.0.1",
   network: getNetworkIpAddress(),
   port: getRandomNumber(1025, 20000),
+  staticFiles: decodeURIComponent(Bun.argv[2]),
 };
 
 // start server
