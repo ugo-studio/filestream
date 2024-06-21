@@ -10,11 +10,12 @@
   import QrcodeView from "../comp/qrcode-view.svelte";
   import Username from "../comp/username.svelte";
   import { Child, Command } from "@tauri-apps/api/shell";
-  import { resourceDir } from "@tauri-apps/api/path";
+  import { resolveResource } from "@tauri-apps/api/path";
 
   let server = new FileServer();
   let command: Command | undefined;
   let process: Child | undefined;
+  let webFiles: string | undefined;
   let showQr = false;
 
   onMount(async () => {
@@ -27,7 +28,7 @@
           let shareAddr = `${serverAddr}/?s=${encodeURIComponent(serverAddr)}`;
           server.serverAddr = serverAddr;
           server.shareAddr = shareAddr;
-          console.log(info, serverAddr, shareAddr);
+          console.log(info, { serverAddr, shareAddr, webFiles });
         }
       }
       server.connect();
@@ -42,17 +43,17 @@
 
   const startProcess = () =>
     new Promise<any>(async (resolve) => {
-      command = Command.sidecar(
-        "bin/server",
-        encodeURIComponent(await resourceDir())
-      );
+      webFiles = await resolveResource("../build");
+      command = Command.sidecar("bin/server", encodeURIComponent(webFiles));
       command.on("error", (_) => resolve(process?.kill()));
       command.on("close", (_) => resolve(process?.kill()));
       command.stdout.on("data", (d) => {
         try {
           let json = JSON.parse(String(d));
           resolve(json);
-        } catch (_) {}
+        } catch (_) {
+          console.log(d);
+        }
       });
       process = await command.spawn();
     });

@@ -80,14 +80,15 @@ export class FileServer {
         if (req) {
           sending = true;
           // send stream to the receiver
+          const { readable, writable } = new TransformStream();
           await new Promise<void>(async (r) => {
             try {
-              const { readable, writable } = new TransformStream();
               const file: File | null = (await req.formData()).get(
                 "file"
               ) as any;
               file?.stream()?.pipeTo(writable);
               resolve(readable);
+              console.log(`piping file to response: ${name}`);
               // wait for receiver to consume the stream
               const timeout = setTimeout(() => {
                 clearInterval(timer);
@@ -102,6 +103,7 @@ export class FileServer {
               }, 2000);
             } catch (err) {
               r();
+              writable.close();
               console.error(`error sending stream: ${err}`);
             }
           });
